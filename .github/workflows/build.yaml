@@ -14,16 +14,22 @@ env:
 jobs:
   build-and-release:
     runs-on: ubuntu-latest
-    
+    # Add this permissions block:
+    permissions:
+      contents: write
+      actions: read
+      
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Install dependencies
       run: |
         sudo apt-get update
         sudo apt-get upgrade -y
-        sudo apt-get install -y make git zlib1g-dev libssl-dev gperf cmake clang-18 libc++-18-dev libc++abi-18-dev
+        sudo apt-get install -y make git zlib1g-dev libssl-dev gperf cmake clang-18 libc++-18-dev libc++abi-18-dev gh
 
     - name: Clone Telegram Bot API
       run: |
@@ -38,22 +44,10 @@ jobs:
         CXXFLAGS="-stdlib=libc++" CC=/usr/bin/clang-18 CXX=/usr/bin/clang++-18 cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX:PATH=.. ..
         cmake --build . --target install
 
-    - name: Verify binary
-      run: |
-        ls -l telegram-bot-api/bin/telegram-bot-api*
-        file telegram-bot-api/bin/telegram-bot-api
-
     - name: Release bare binary with GitHub CLI
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: >-
         gh release create "v${{ env.VERSION }}"
-        "telegram-bot-api/bin/telegram-bot-api#telegram-bot-api-v${{ env.VERSION }}-linux"
-        --title "Telegram Bot API v${{ env.VERSION }}"
-        --notes "Bare binary built from source
-        
-        - Version: ${{ env.VERSION }}
-        - Build date: $(date)
-        - Commit: ${{ github.sha }}
-        - Platform: Linux x86_64
-        - Usage: ./telegram-bot-api --help"
+        "telegram-bot-api/bin/telegram-bot-api#telegram-bot-api"
+        --generate-notes
