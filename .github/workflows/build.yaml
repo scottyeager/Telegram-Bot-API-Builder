@@ -43,19 +43,17 @@ jobs:
         ls -l telegram-bot-api/bin/telegram-bot-api*
         file telegram-bot-api/bin/telegram-bot-api
 
-    - name: Create release
-      uses: softprops/action-gh-release@v1
-      with:
-        tag_name: v${{ env.VERSION }}
-        name: Telegram Bot API v${{ env.VERSION }}
-        body: |
-          Telegram Bot API binary built from source
-          - Version: ${{ env.VERSION }}
-          - Build date: ${{ github.event.head_commit.timestamp }}
-          - Commit: ${{ github.sha }}
-        files: |
-          telegram-bot-api/bin/telegram-bot-api
-        draft: false
-        prerelease: false
+    - name: Release bare binary with GitHub CLI
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: >-
+        gh release create "v${{ env.VERSION }}"
+        "telegram-bot-api/bin/telegram-bot-api#telegram-bot-api-v${{ env.VERSION }}-linux"
+        --title "Telegram Bot API v${{ env.VERSION }}"
+        --notes "Bare binary built from source
+        
+        - Version: ${{ env.VERSION }}
+        - Build date: $(date)
+        - Commit: ${{ github.sha }}
+        - Platform: Linux x86_64
+        - Usage: ./telegram-bot-api --help"
